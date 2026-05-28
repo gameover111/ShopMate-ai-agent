@@ -98,6 +98,13 @@
             <version>5.6.2</version>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-starter-vector-store-pgvector -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
+        </dependency>
+
+
         <!-- 阿里云灵积、百练大模型服务  -->
         <dependency>
             <groupId>com.alibaba</groupId>

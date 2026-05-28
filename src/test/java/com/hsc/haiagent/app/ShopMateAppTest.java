@@ -77,8 +77,10 @@ class ShopMateAppTest {
     @Test
     void doChatWithRagShop() {
         String chatId = UUID.randomUUID().toString();
-        String message = "我喜欢鞋，给我推荐下吧";
+        // 💡 明确提及关键词，引导向量检索，并要求它结合商品库推荐
+        String message = "我是售前客服，有顾客让我推荐鞋子。请结合咱们店铺在售的商品清单知识库，给我推荐两款适合日常穿的舒适运动鞋。";
         String response = shopMateApp.doChatWithRag(message, chatId);
+        System.out.println("AI 最终回复：\n" + response);
         assertNotNull(response);
     }
 }

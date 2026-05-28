@@ -29,11 +29,14 @@ class ShopMateAppDocumentLoader {
             Resource[] resources = resourcePatternResolver.getResources("classpath:document/*.md");
             for (Resource resource : resources) {
                 String fileName = resource.getFilename();
+                // 提取文档倒数第 3 和第 2 个字作为标签
+                String status = fileName.substring(fileName.length() - 6, fileName.length() - 4);
                 MarkdownDocumentReaderConfig config = MarkdownDocumentReaderConfig.builder()
                         .withHorizontalRuleCreateDocument(true)// 水平规则创建文档
                         .withIncludeCodeBlock(false)// 不包含代码块
                         .withIncludeBlockquote(false)// 不包含引用
                         .withAdditionalMetadata("filename", fileName)// 添加文件名元数据
+                        .withAdditionalMetadata("status", status)// 添加状态元数据
                         .build();
                 MarkdownDocumentReader reader = new MarkdownDocumentReader(resource, config);
                 allDocuments.addAll(reader.get());

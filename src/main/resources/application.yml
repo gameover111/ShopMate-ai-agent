@@ -3,6 +3,9 @@ spring:
     name: h-ai-agent
   profiles:
     active: local
+  datasource:
+    url: jdbc:postgresql://47.118.84.108:5432/shopmateagent
+
 server:
   port: 8123
   servlet:

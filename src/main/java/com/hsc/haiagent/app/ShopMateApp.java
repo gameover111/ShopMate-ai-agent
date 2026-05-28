@@ -4,6 +4,8 @@ import com.hsc.haiagent.advisor.MyLoggerAdvisor;
 import com.hsc.haiagent.advisor.PermissionAdvisor;
 import com.hsc.haiagent.advisor.SensitiveWordAdvisor;
 import com.hsc.haiagent.chatmemory.FileBasedChatMemory;
+import com.hsc.haiagent.rag.QueryRewriter;
+import com.hsc.haiagent.rag.ShopMateAppRagCustomAdvisorFactory;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -29,6 +31,16 @@ import java.util.Set;
 @Slf4j
 public class ShopMateApp {
     private final ChatClient chatClient;
+
+    @Resource
+    private VectorStore shopMateAppVectorStore;
+    @Resource
+    private Advisor shopMateAppRagCloudAdvisor;
+
+    //引入查询重写器
+    @Resource
+    private QueryRewriter queryRewriter;
+
 
     private static final String SYSTEM_PROMPT = "扮演深耕电商客服沟通领域的专家——店小二。开场向用户表明身份，告知用户可倾诉客服回复中的难题。\n" +
             "围绕售前咨询、售后纠纷、差评投诉三种状态提问：\n" +
@@ -152,11 +164,10 @@ public class ShopMateApp {
      * @param chatId
      * @return
      */
-    @Resource
-    private VectorStore shopMateAppVectorStore;
-    @Resource
-    private Advisor shopMateAppRagCloudAdvisor;
+
     public String doChatWithRag(String message, String chatId) {
+        // 执行查询重写
+//        String rewrittenMessage = queryRewriter.doQueryRewrite(message);
         ChatResponse chatResponse = chatClient
                 .prompt()
                 .user(message)
@@ -164,11 +175,16 @@ public class ShopMateApp {
                     spec.param("chat_memory_conversation_id", chatId)
                             .param("chat_memory_retrieve_size", 10)
                             .param("user_permissions", Set.of("AI_CHAT", "user"));
-                    spec.advisors(new MyLoggerAdvisor());
-                    // 开启RAG advisor
-//                    spec.advisors(QuestionAnswerAdvisor.builder(shopMateAppVectorStore).build());//应用rag知识库问答
-                    spec.advisors(shopMateAppRagCloudAdvisor);//应用rag检索增强服务（基于阿里云知识库服务）
-                })
+                    //开启日志，便于观察效果
+//                    spec.advisors(new MyLoggerAdvisor());
+                    //应用rag检索增强服务-向量数据库，知识问答
+//                    spec.advisors(QuestionAnswerAdvisor.builder(shopMateAppVectorStore).build());
+                    //应用rag检索增强服务（基于阿里云知识库服务）
+//                    spec.advisors(shopMateAppRagCloudAdvisor);
+                    //应用自定义rag检索增强服务（文档查询器+上下文增强器）
+                    spec.advisors(ShopMateAppRagCustomAdvisorFactory
+                            .createShopMateAppRagCustomAdvisor(shopMateAppVectorStore, "品列"));//应用rag知识库问答-向量数据库
+                                   })
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
