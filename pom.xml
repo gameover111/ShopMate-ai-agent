@@ -75,6 +75,7 @@
             <artifactId>spring-ai-markdown-document-reader</artifactId>
             <version>2.0.0-M6</version>
         </dependency>
+
         <!-- 支持 RAG advisor -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

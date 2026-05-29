@@ -5,6 +5,9 @@ spring:
     active: local
   datasource:
     url: jdbc:postgresql://47.118.84.108:5432/shopmateagent
+app:
+  github:
+    repo: alibaba/spring-ai-alibaba
 
 server:
   port: 8123

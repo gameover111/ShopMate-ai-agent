@@ -5,6 +5,7 @@ import com.hsc.haiagent.advisor.PermissionAdvisor;
 import com.hsc.haiagent.advisor.SensitiveWordAdvisor;
 import com.hsc.haiagent.chatmemory.FileBasedChatMemory;
 import com.hsc.haiagent.rag.QueryRewriter;
+import com.hsc.haiagent.rag.QueryTransformer;
 import com.hsc.haiagent.rag.ShopMateAppRagCustomAdvisorFactory;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -164,10 +165,16 @@ public class ShopMateApp {
      * @param chatId
      * @return
      */
+    @Resource
+    private QueryTransformer queryTransformer;
 
     public String doChatWithRag(String message, String chatId) {
         // 执行查询重写
 //        String rewrittenMessage = queryRewriter.doQueryRewrite(message);
+
+        // 💡  查询翻译  核心替换：直接调用基于翻译 API 的转换器，Token 消耗瞬间归零！
+        message = queryTransformer.transform(message);
+
         ChatResponse chatResponse = chatClient
                 .prompt()
                 .user(message)
