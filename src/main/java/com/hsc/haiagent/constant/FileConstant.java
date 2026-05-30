@@ -7,5 +7,5 @@ public interface FileConstant {
     /**
      * 临时文件目录
      */
-    String TEMP_FILE_DIR = System.getProperty("user.dir") + "/" + "tmp";
+    String FILE_SAVE_DIR = System.getProperty("user.dir") + "/" + "tmp";
 }

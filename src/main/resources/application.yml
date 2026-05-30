@@ -5,10 +5,20 @@ spring:
     active: local
   datasource:
     url: jdbc:postgresql://47.118.84.108:5432/shopmateagent
+  mail:
+    # 1. 邮件服务器的“地址”。QQ邮箱的发送服务器固定为 smtp.qq.com
+    host: smtp.qq.com
+    properties:
+      mail:
+        smtp:
+          # 4. 开启 SMTP 身份验证。必须为 true，告诉QQ服务器“我是带了账号密码来登录的”
+          auth: true
+          starttls:
+            # 5. 开启 TLS 加密传输。必须为 true，确保你的邮件内容在网络传输过程中不会被黑客窃听
+            enable: true
 app:
   github:
     repo: alibaba/spring-ai-alibaba
-
 server:
   port: 8123
   servlet:
