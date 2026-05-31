@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: h-image-search-mcp-server
+  profiles:
+#    active: stdio
+    active: sse
+server:
+  port: 8127
+app:
+  pexels:
+    api-key: bbkn574Xe5b3nf5XDVxoUfO53av9vX5k30lR68CkUWH788VrimWFtyx4

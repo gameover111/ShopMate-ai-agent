@@ -5,6 +5,16 @@ spring:
     active: local
   datasource:
     url: jdbc:postgresql://47.118.84.108:5432/shopmateagent
+  ai:
+    mcp:
+      client:
+        sse:
+          connections:
+            server1:
+              url: http://localhost:8127
+        init-timeout: 30s  # 给单元测试留出足够的启动缓冲时间，防止因卡顿导致握手超时
+#        stdio:
+#          servers-configuration: classpath:mcp-servers.json
   mail:
     # 1. 邮件服务器的“地址”。QQ邮箱的发送服务器固定为 smtp.qq.com
     host: smtp.qq.com

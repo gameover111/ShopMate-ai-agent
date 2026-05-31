@@ -20,6 +20,7 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MimeTypeUtils;
@@ -230,6 +231,33 @@ public class ShopMateApp {
         return content;
     }
 
+    @Resource
+    private ToolCallbackProvider toolCallbackProvider;
+
+    public String doChatWithMcp(String message, String chatId) {
+        ChatResponse response = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec ->{
+                    spec.param("chat_memory_conversation_id", chatId)
+                            .param("chat_memory_retrieve_size", 10)
+                            .param("user_permissions", Set.of("AI_CHAT", "user"));
+                    //开启日志，便于观察效果
+                    spec.advisors(new MyLoggerAdvisor());
+                    //应用rag检索增强服务-向量数据库，知识问答
+//                    spec.advisors(QuestionAnswerAdvisor.builder(shopMateAppVectorStore).build());
+                    //应用rag检索增强服务（基于阿里云知识库服务）
+//                    spec.advisors(shopMateAppRagCloudAdvisor);
+                    //应用自定义rag检索增强服务（文档查询器+上下文增强器）
+//                    spec.advisors(ShopMateAppRagCustomAdvisorFactory.createShopMateAppRagCustomAdvisor(shopMateAppVectorStore, "品列"));//应用rag知识库问答-向量数据库
+                })
+                .toolCallbacks(toolCallbackProvider.getToolCallbacks())
+                .call()
+                .chatResponse();
+        String content = response.getResult().getOutput().getText();
+        log.info("content: {}", content);
+        return content;
+    }
 
 
     record ShopMateReport(String title, List<String> suggestions) {

@@ -1,0 +1,14 @@
+spring:
+  ai:
+    mcp:
+      server:
+        name: h-image-search-mcp-server
+        version: 0.0.1
+        type: SYNC
+#      （需开启 stdio 模式）：
+        stdio: true
+
+  main:
+#    （需关闭 web 支持）：
+    web-application-type: none
+    banner-mode: off
