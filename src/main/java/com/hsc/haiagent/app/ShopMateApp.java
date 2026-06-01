@@ -25,6 +25,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.List;
@@ -106,7 +107,7 @@ public class ShopMateApp {
                 .advisors(spec -> spec
                         // 👇 直接用原始字符串键名，不需要任何常量
                         .param("chat_memory_conversation_id", chatId)
-                        .param("chat_memory_retrieve_size", 1)
+                        .param("chat_memory_retrieve_size", 10)
                         .param("user_permissions", Set.of("AI_CHAT", "user"))
                 )
                 .call()
@@ -115,6 +116,26 @@ public class ShopMateApp {
         log.info("content: {}", content);
         return content;
     }
+    /**
+     * AI 基础对话（支持多轮会话记忆，流式输出）
+     * @param message 用户消息
+     * @param chatId 会话id
+     * @return 流式输出的客服回复
+     */
+    public Flux<String> doChatByStream(String message, String chatId) {
+        Flux<String> content1 = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec -> spec
+                        // 👇 直接用原始字符串键名，不需要任何常量
+                        .param("chat_memory_conversation_id", chatId)
+                        .param("chat_memory_retrieve_size", 10)
+                        .param("user_permissions", Set.of("AI_CHAT", "user"))
+                )
+                .stream()
+                .content();
+        return content1;
+    }
     public ShopMateReport doChatWithReport(String message, String chatId) {
         ShopMateReport shopMateReport = chatClient
                 .prompt()
@@ -122,7 +143,7 @@ public class ShopMateApp {
                 .user(message)
                 .advisors(spec -> spec
                         .param("chat_memory_conversation_id", chatId)
-                        .param("chat_memory_retrieve_size", 1)
+                        .param("chat_memory_retrieve_size", 10)
                         .param("user_permissions", Set.of("AI_CHAT", "user"))
 
                 )
@@ -150,7 +171,7 @@ public class ShopMateApp {
         ChatResponse response = promptSpec
                 .advisors(spec -> spec
                         .param("chat_memory_conversation_id", chatId)
-                        .param("chat_memory_retrieve_size", 1)
+                        .param("chat_memory_retrieve_size", 10)
                         .param("user_permissions", Set.of("AI_CHAT", "user"))
                 )
                 .call()
