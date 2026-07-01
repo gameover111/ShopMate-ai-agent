@@ -1,7 +1,10 @@
 <div align="center">
 
 
-Uploading agent演示.mp4…
+
+https://github.com/user-attachments/assets/06994056-5b46-4841-9e12-d622ded2726f
+
+
 
 
 # 🧠 Shopmate 店小二 · AI Agent 平台
