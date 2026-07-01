@@ -16,7 +16,7 @@
         <span class="brand-sub">店小二</span>
       </h1>
       <p class="subtitle">
-        电商智能客服 × 超级智能体 · 双引擎驱动 · 流式对话即刻响应
+        电商智能客服 × 超级智能体 × 多 Agent 编排 · 三引擎驱动 · 流式对话即刻响应
       </p>
     </header>
 
@@ -75,13 +75,22 @@ const apps = [
     description:
       '全能型 AI 助手，自主规划并调用工具逐步完成任务，每个执行步骤独立展示，清晰可追踪。',
   },
+  {
+    path: '/orchestrator',
+    theme: 'manus',
+    avatarType: 'manus',
+    tag: 'Harness · 多 Agent',
+    title: '多 Agent 编排器 · Orchestrator',
+    description:
+      '统一入口，自动分析需求并分派给最合适的 Agent。HManus 处理复杂任务，店小二专注电商客服。',
+  },
 ]
 
 const features = [
   { icon: '⚡', label: 'SSE 流式' },
   { icon: '🧠', label: 'Spring AI' },
-  { icon: '📱', label: '响应式' },
-  { icon: '🔒', label: '会话隔离' },
+  { icon: '🔗', label: 'Agent Harness' },
+  { icon: '🎯', label: '多 Agent 编排' },
 ]
 </script>
 

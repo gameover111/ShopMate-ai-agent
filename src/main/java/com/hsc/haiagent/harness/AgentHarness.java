@@ -22,17 +22,32 @@ public interface AgentHarness {
      * 同步执行一个 Agent。
      * @param agent      要执行的 Agent
      * @param userPrompt 用户输入
+     * @param chatId     会话 ID（用于持久化聊天记录，为空则不保存）
      * @return 所有步骤拼接的结果文本
      */
-    String execute(Agent agent, String userPrompt);
+    String execute(Agent agent, String userPrompt, String chatId);
+
+    default String execute(Agent agent, String userPrompt) {
+        return execute(agent, userPrompt, null);
+    }
 
     /**
      * 流式执行一个 Agent，每个步骤结果通过 SSE 推送。
-     * @param agent      要执行的 Agent
-     * @param userPrompt 用户输入
+     * @param agent          要执行的 Agent
+     * @param userPrompt     用户输入
+     * @param chatId         会话 ID
+     * @param onBeforeReset  执行完成、resetAgent 之前的回调（此时 messageList 完好）
      * @return SseEmitter（300s 超时）
      */
-    SseEmitter executeStream(Agent agent, String userPrompt);
+    SseEmitter executeStream(Agent agent, String userPrompt, String chatId, Runnable onBeforeReset);
+
+    default SseEmitter executeStream(Agent agent, String userPrompt, String chatId) {
+        return executeStream(agent, userPrompt, chatId, null);
+    }
+
+    default SseEmitter executeStream(Agent agent, String userPrompt) {
+        return executeStream(agent, userPrompt, null, null);
+    }
 
     // ========== Agent 注册表 ==========
 
@@ -56,8 +71,19 @@ public interface AgentHarness {
     /**
      * 通过编排器（MultiAgentOrchestrator）自动判断使用哪个子 Agent，
      * 并以流式输出结果。
-     * @param userPrompt 用户输入
+     * @param userPrompt     用户输入
+     * @param chatId         会话 ID
+     * @param onBeforeReset  resetAgent 前的回调
      * @return SseEmitter
      */
-    SseEmitter orchestrateStream(String userPrompt);
+    SseEmitter orchestrateStream(String userPrompt, String chatId, Runnable onBeforeReset);
+
+    default SseEmitter orchestrateStream(String userPrompt) {
+        return orchestrateStream(userPrompt, null, null);
+    }
+
+    /**
+     * 确保编排器已初始化（在 Agent 注册完成后调用）。
+     */
+    void initializeOrchestrator();
 }

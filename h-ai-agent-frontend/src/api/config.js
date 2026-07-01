@@ -17,10 +17,28 @@ const http = axios.create({
   timeout: 300000,
 })
 
-// 响应拦截器（保持你原本的逻辑不变，仅作格式规范）
+// 👇 请求拦截器：自动携带 JWT Token
+http.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('shopmate_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// 响应拦截器
 http.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    // 401 未授权时不清除用户数据（AI 接口可匿名访问）
+    if (error.response?.status === 403) {
+      localStorage.removeItem('shopmate_token')
+      localStorage.removeItem('shopmate_user')
+      window.location.href = '/login'
+    }
     console.error('API请求发生错误:', error)
     return Promise.reject(error)
   }

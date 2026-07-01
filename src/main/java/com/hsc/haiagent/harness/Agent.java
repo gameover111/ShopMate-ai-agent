@@ -51,6 +51,13 @@ public interface Agent {
         // 默认空实现
     }
 
+    /**
+     * 获取当前已注入的工具列表。
+     */
+    default ToolCallback[] getToolCallbacks() {
+        return new ToolCallback[0];
+    }
+
     // ========== 核心逻辑 ==========
 
     /**

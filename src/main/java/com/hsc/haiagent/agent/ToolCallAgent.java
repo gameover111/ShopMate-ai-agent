@@ -36,6 +36,15 @@ public class ToolCallAgent extends ReActAgent {
     /** 工具调用的聊天响应（think 阶段记录，act 阶段消费） */
     private ChatResponse toolCallChatResponse;
 
+    /** 上一次 think 的纯文本回复（无工具调用时返回给用户） */
+    private String lastAssistantText = "";
+
+    @Override
+    public void cleanup() {
+        this.initialPromptSent = false;
+        this.lastAssistantText = "";
+    }
+
     /** 工具调用管理器 */
     private final ToolCallingManager toolCallingManager;
 
@@ -49,12 +58,41 @@ public class ToolCallAgent extends ReActAgent {
                 .build();
     }
 
+    /**
+     * 带初始工具的构造器（用于编排器等特殊 Agent）。
+     */
+    public ToolCallAgent(ToolCallback[] toolCallbacks) {
+        this();
+        setToolCallbacks(toolCallbacks);
+    }
+
+    /** 记录是否已发过初始提示词，避免每轮重复追加 */
+    private boolean initialPromptSent = false;
+
+    @Override
+    public String step() {
+        try {
+            boolean shouldAct = think();
+            if (!shouldAct) {
+                // 返回 LLM 的真实回复文本，而非固定提示
+                String text = lastAssistantText;
+                lastAssistantText = "";
+                return text.isBlank() ? "思考完成" : text;
+            }
+            return act();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "步骤执行失败: " + e.getMessage();
+        }
+    }
+
     @Override
     public boolean think() {
-        // 1. 拼接下一步提示词
-        if (getNextStepPrompt() != null && !getNextStepPrompt().isEmpty()) {
+        // 1. 只在第一步发送下一步提示词，之后不再重复追加
+        if (!initialPromptSent && getNextStepPrompt() != null && !getNextStepPrompt().isEmpty()) {
             UserMessage userMessage = new UserMessage(getNextStepPrompt());
             getMessageList().add(userMessage);
+            initialPromptSent = true;
         }
 
         List<Message> messageList = getMessageList();
@@ -84,9 +122,11 @@ public class ToolCallAgent extends ReActAgent {
                     .collect(Collectors.joining("\n"));
             log.info(toolCallInfo);
 
-            // 如果没有工具调用，记录助手消息并返回 false
+            // 没有工具调用 → 记录回复文本，标记完成
             if (toolCallList.isEmpty()) {
                 getMessageList().add(assistantMessage);
+                this.lastAssistantText = result != null ? result : "";
+                setState(AgentState.FINISHED);
                 return false;
             }
             // 有工具调用，由 act 处理
@@ -112,10 +152,16 @@ public class ToolCallAgent extends ReActAgent {
         // 更新消息上下文
         setMessageList(toolExecutionResult.conversationHistory());
 
-        // 解析工具调用结果
+        // 解析工具调用结果（友好展示，截取前 200 字符避免刷屏）
         ToolResponseMessage toolResponseMessage = (ToolResponseMessage) CollUtil.getLast(toolExecutionResult.conversationHistory());
         String results = toolResponseMessage.getResponses().stream()
-                .map(response -> "工具 " + response.name() + " 完成了它的任务！结果: " + response.responseData())
+                .map(response -> {
+                    String data = response.responseData();
+                    if (data != null && data.length() > 200) {
+                        data = data.substring(0, 200) + "…";
+                    }
+                    return "✓ 工具[" + response.name() + "] 执行完成";
+                })
                 .collect(Collectors.joining("\n"));
 
         // 判断是否调用了 doTerminate 工具

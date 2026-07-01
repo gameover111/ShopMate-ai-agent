@@ -2,6 +2,7 @@
   <div class="ai-avatar" :class="[type, size]" :title="title">
     <img v-if="type === 'shop-mate'" src="@/assets/avatars/shop-mate.svg" alt="店小二 AI" />
     <img v-else-if="type === 'manus'" src="@/assets/avatars/manus.svg" alt="HManus AI" />
+    <img v-else-if="type === 'orchestrator'" src="@/assets/avatars/orchestrator.svg" alt="Orchestrator AI" />
     <img v-else src="@/assets/avatars/user.svg" alt="用户" />
   </div>
 </template>
@@ -11,7 +12,7 @@ defineProps({
   type: {
     type: String,
     default: 'user',
-    validator: (v) => ['shop-mate', 'manus', 'user'].includes(v),
+    validator: (v) => ['shop-mate', 'manus', 'orchestrator', 'user'].includes(v),
   },
   size: {
     type: String,
@@ -65,6 +66,11 @@ defineProps({
 .ai-avatar.manus {
   border-color: rgba(236, 72, 153, 0.45);
   box-shadow: 0 0 16px rgba(236, 72, 153, 0.25);
+}
+
+.ai-avatar.orchestrator {
+  border-color: rgba(167, 139, 250, 0.45);
+  box-shadow: 0 0 16px rgba(167, 139, 250, 0.25);
 }
 
 .ai-avatar.user {

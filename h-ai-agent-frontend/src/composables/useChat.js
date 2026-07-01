@@ -4,14 +4,12 @@ import { buildSseUrl } from '@/api/chat'
 
 /**
  * @typedef {'accumulate' | 'step'} StreamMode
- * accumulate：流式追加到最后一条 AI 气泡（智能客服）
- * step：每个 SSE 事件单独一条 AI 气泡（超级智能体步骤）
  */
 
 /**
  * @param {{
  *   ssePath: string,
- *   getParams: (message: string) => Record<string, string>,
+ *   getParams: (message: string, chatId?: string) => Record<string, string>,
  *   streamMode?: StreamMode,
  * }} options
  */
@@ -20,7 +18,28 @@ export function useChat({ ssePath, getParams, streamMode = 'accumulate' }) {
   const inputText = ref('')
   const loading = ref(false)
   const error = ref('')
+  const chatId = ref('')
   let abortController = null
+
+  /** 设置会话 ID（切换会话时调用） */
+  function setChatId(id) {
+    chatId.value = id
+  }
+
+  /** 加载历史消息（切换会话时调用） */
+  function loadMessages(msgs) {
+    messages.value = (msgs || []).map((m) => ({
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content || '',
+    }))
+  }
+
+  /** 清空消息 */
+  function clearMessages() {
+    messages.value = []
+    error.value = ''
+  }
 
   function appendMessage(role, content, extra = {}) {
     messages.value.push({
@@ -69,7 +88,7 @@ export function useChat({ ssePath, getParams, streamMode = 'accumulate' }) {
     scrollToBottom?.()
 
     abortController = new AbortController()
-    const url = buildSseUrl(ssePath, getParams(text))
+    const url = buildSseUrl(ssePath, getParams(text, chatId.value))
 
     await fetchSSE(url, {
       signal: abortController.signal,
@@ -118,6 +137,10 @@ export function useChat({ ssePath, getParams, streamMode = 'accumulate' }) {
     inputText,
     loading,
     error,
+    chatId,
+    setChatId,
+    loadMessages,
+    clearMessages,
     sendMessage,
     stopGeneration,
     streamMode,

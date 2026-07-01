@@ -15,6 +15,30 @@ const routes = [
     },
   },
   {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/LoginView.vue'),
+    meta: { title: '登录' },
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/views/RegisterView.vue'),
+    meta: { title: '注册' },
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('@/views/ProfileView.vue'),
+    meta: { title: '账户设置', requiresAuth: true },
+  },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('@/views/AdminUsersView.vue'),
+    meta: { title: '用户管理 - 管理员', requiresAuth: true, requiresAdmin: true },
+  },
+  {
     path: '/shop-mate',
     name: 'shop-mate',
     component: () => import('@/views/ShopMateChatView.vue'),
@@ -38,6 +62,18 @@ const routes = [
         'HManus,超级智能体,AI Agent,自主规划,工具调用,SSE,步骤执行',
     },
   },
+  {
+    path: '/orchestrator',
+    name: 'orchestrator',
+    component: () => import('@/views/OrchestratorChatView.vue'),
+    meta: {
+      title: '多 Agent 编排器 - Orchestrator',
+      description:
+        '多 Agent 编排器，自动分析用户需求并分派给 HManus 或店小二，统一入口完成复杂任务。',
+      keywords:
+        'Orchestrator,多Agent,编排器,AI,智能路由,任务分派',
+    },
+  },
 ]
 
 const router = createRouter({
@@ -46,6 +82,24 @@ const router = createRouter({
   scrollBehavior() {
     return { top: 0 }
   },
+})
+
+// 导航守卫：需登录/需管理员的页面
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('shopmate_token')
+  const user = JSON.parse(localStorage.getItem('shopmate_user') || 'null')
+
+  if (to.meta.requiresAuth && !token) {
+    next('/login')
+    return
+  }
+
+  if (to.meta.requiresAdmin && user?.role !== 'ADMIN') {
+    next('/')
+    return
+  }
+
+  next()
 })
 
 router.afterEach((to) => {

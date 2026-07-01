@@ -3,24 +3,16 @@ package com.hsc.haiagent.app;
 import com.hsc.haiagent.advisor.MyLoggerAdvisor;
 import com.hsc.haiagent.advisor.PermissionAdvisor;
 import com.hsc.haiagent.advisor.SensitiveWordAdvisor;
-import com.hsc.haiagent.chatmemory.FileBasedChatMemory;
-import com.hsc.haiagent.rag.QueryRewriter;
 import com.hsc.haiagent.rag.QueryTransformer;
 import com.hsc.haiagent.rag.ShopMateAppRagCustomAdvisorFactory;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.api.Advisor;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
-import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MimeTypeUtils;
@@ -41,11 +33,6 @@ public class ShopMateApp {
 //    @Resource
 //    private Advisor shopMateAppRagCloudAdvisor;
 
-    //引入查询重写器
-    @Resource
-    private QueryRewriter queryRewriter;
-
-
     private static final String SYSTEM_PROMPT = "扮演深耕电商客服沟通领域的专家——店小二。开场向用户表明身份，告知用户可倾诉客服回复中的难题。\n" +
             "围绕售前咨询、售后纠纷、差评投诉三种状态提问：\n" +
             "- 售前咨询状态：询问如何应对顾客比价、产品细节追问、犹豫不决等情况；\n" +
@@ -58,22 +45,8 @@ public class ShopMateApp {
      * @param chatModel
      */
 
-    public ShopMateApp(ChatModel chatModel) {
-        //1.聊天记忆管理器
-
-/*        //方式一：初始化基于文件的聊天记忆管理器
-        String fileDir = System.getProperty("user.dir") + "/chat-memory";
-        ChatMemory chatMemory = new FileBasedChatMemory(fileDir);*/
-
-
-        //方式二：初始化基于内存的聊天记忆管理器
-        // 1.1 创建底层存储仓库 (In-Memory)
-        ChatMemoryRepository chatMemoryRepository = new InMemoryChatMemoryRepository();
-        // 2.2 创建“滑动窗口”管理器，并设置最多保留 20 条消息
-        ChatMemory chatMemory = MessageWindowChatMemory.builder()
-                .chatMemoryRepository(chatMemoryRepository)
-//                .maxMessages(20) // 这个数字可根据你的上下文长度调整
-                .build();
+    public ShopMateApp(ChatModel chatModel, ChatMemory chatMemory) {
+        // 使用共享的 ChatMemory Bean（JDBC 持久化）
 
 
         // 2.创建 ChatClient 实例
@@ -94,22 +67,33 @@ public class ShopMateApp {
                 .build();
     }
 
+    private static String resolveChatId(String chatId) {
+        return (chatId == null || chatId.isBlank())
+                ? "anon-" + java.util.UUID.randomUUID().toString().replace("-", "")
+                : chatId;
+    }
+
     /**
-     * AI 基础对话（支持多轮会话记忆）
-     * @param message
-     * @param chatId
-     * @return
+     * AI 增强对话（同步）— 整合 RAG 知识库 + 工具调用 + 多轮记忆
      */
     public String doChat(String message, String chatId) {
+        String finalChatId = resolveChatId(chatId);
+
+        // 查询翻译（中→英）
+        message = queryTransformer.transform(message);
+
         ChatResponse response = chatClient
                 .prompt()
                 .user(message)
                 .advisors(spec -> spec
-                        // 👇 直接用原始字符串键名，不需要任何常量
-                        .param("chat_memory_conversation_id", chatId)
+                        .param("chat_memory_conversation_id", finalChatId)
                         .param("chat_memory_retrieve_size", 10)
                         .param("user_permissions", Set.of("AI_CHAT", "user"))
+                        // RAG 检索增强
+                        .advisors(ShopMateAppRagCustomAdvisorFactory
+                                .createShopMateAppRagCustomAdvisor(shopMateAppVectorStore))
                 )
+                .toolCallbacks(allTools)
                 .call()
                 .chatResponse();
         String content = response.getResult().getOutput().getText();
@@ -117,32 +101,42 @@ public class ShopMateApp {
         return content;
     }
     /**
-     * AI 基础对话（支持多轮会话记忆，流式输出）
+     * AI 增强对话（流式输出）— 整合 RAG 知识库 + 工具调用 + 多轮记忆
      * @param message 用户消息
      * @param chatId 会话id
      * @return 流式输出的客服回复
      */
     public Flux<String> doChatByStream(String message, String chatId) {
-        Flux<String> content1 = chatClient
+        String finalChatId = resolveChatId(chatId);
+
+        // 1. 查询翻译（中→英，提升 RAG 检索效果）
+//        message = queryTransformer.transform(message);
+
+        final String finalMessage = message;
+        return chatClient
                 .prompt()
-                .user(message)
+                .user(finalMessage)
                 .advisors(spec -> spec
-                        // 👇 直接用原始字符串键名，不需要任何常量
-                        .param("chat_memory_conversation_id", chatId)
+                        .param("chat_memory_conversation_id", finalChatId)
                         .param("chat_memory_retrieve_size", 10)
                         .param("user_permissions", Set.of("AI_CHAT", "user"))
+                        // 2. RAG 检索增强：从向量数据库检索相关文档
+                        .advisors(ShopMateAppRagCustomAdvisorFactory
+                                .createShopMateAppRagCustomAdvisor(shopMateAppVectorStore))
                 )
+                // 3. 注册所有工具（搜索、文件、PDF等）
+                .toolCallbacks(allTools)
                 .stream()
                 .content();
-        return content1;
     }
     public ShopMateReport doChatWithReport(String message, String chatId) {
+        String cid = resolveChatId(chatId);
         ShopMateReport shopMateReport = chatClient
                 .prompt()
                 .system(SYSTEM_PROMPT + "每次对话后都要生成客服沟通结果，标题为{用户名}的客服沟通报告，内容为建议列表")
                 .user(message)
                 .advisors(spec -> spec
-                        .param("chat_memory_conversation_id", chatId)
+                        .param("chat_memory_conversation_id", cid)
                         .param("chat_memory_retrieve_size", 10)
                         .param("user_permissions", Set.of("AI_CHAT", "user"))
 
@@ -154,6 +148,7 @@ public class ShopMateApp {
     }
 
     public String doChatOfImage(String message, String chatId, MultipartFile image) throws IOException {
+        String cid = resolveChatId(chatId);
 // 1. 构建基础请求
         var promptSpec = chatClient.prompt();
 
@@ -170,7 +165,7 @@ public class ShopMateApp {
         // 3. 继续链式调用（Advisors 和 call 方法）
         ChatResponse response = promptSpec
                 .advisors(spec -> spec
-                        .param("chat_memory_conversation_id", chatId)
+                        .param("chat_memory_conversation_id", cid)
                         .param("chat_memory_retrieve_size", 10)
                         .param("user_permissions", Set.of("AI_CHAT", "user"))
                 )
@@ -192,6 +187,7 @@ public class ShopMateApp {
     private QueryTransformer queryTransformer;
 
     public String doChatWithRag(String message, String chatId) {
+        String cid = resolveChatId(chatId);
         // 执行查询重写
 //        String rewrittenMessage = queryRewriter.doQueryRewrite(message);
 
@@ -202,7 +198,7 @@ public class ShopMateApp {
                 .prompt()
                 .user(message)
                 .advisors(spec -> {
-                    spec.param("chat_memory_conversation_id", chatId)
+                    spec.param("chat_memory_conversation_id", cid)
                             .param("chat_memory_retrieve_size", 10)
                             .param("user_permissions", Set.of("AI_CHAT", "user"));
                     //开启日志，便于观察效果
@@ -213,7 +209,7 @@ public class ShopMateApp {
 //                    spec.advisors(shopMateAppRagCloudAdvisor);
                     //应用自定义rag检索增强服务（文档查询器+上下文增强器）
                     spec.advisors(ShopMateAppRagCustomAdvisorFactory
-                            .createShopMateAppRagCustomAdvisor(shopMateAppVectorStore, "品列"));//应用rag知识库问答-向量数据库
+                            .createShopMateAppRagCustomAdvisor(shopMateAppVectorStore));//应用rag知识库问答-向量数据库
                                    })
                 .call()
                 .chatResponse();
@@ -228,11 +224,12 @@ public class ShopMateApp {
     private ToolCallback[] allTools;
 
     public String doChatWithTools(String message, String chatId) {
+        String cid = resolveChatId(chatId);
         ChatResponse response = chatClient
                 .prompt()
                 .user(message)
                 .advisors(spec ->{
-                        spec.param("chat_memory_conversation_id", chatId)
+                        spec.param("chat_memory_conversation_id", cid)
                                 .param("chat_memory_retrieve_size", 10)
                                 .param("user_permissions", Set.of("AI_CHAT", "user"));
                     //开启日志，便于观察效果

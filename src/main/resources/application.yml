@@ -5,6 +5,13 @@ spring:
     active: local
   datasource:
     url: jdbc:postgresql://47.118.84.108:5432/shopmateagent
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   ai:
     mcp:
       client:
@@ -29,6 +36,9 @@ spring:
             # 5. 开启 TLS 加密传输。必须为 true，确保你的邮件内容在网络传输过程中不会被黑客窃听
             enable: true
 app:
+  jwt:
+    secret: SHOPMATE_AI_AGENT_JWT_SECRET_KEY_2026_07_01_SECURE
+    expiration: 86400000
   github:
     repo: alibaba/spring-ai-alibaba
 server:
