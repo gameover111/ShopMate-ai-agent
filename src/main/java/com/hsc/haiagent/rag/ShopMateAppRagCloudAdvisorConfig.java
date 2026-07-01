@@ -1,3 +1,4 @@
+/*
 package com.hsc.haiagent.rag;
 
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
@@ -11,10 +12,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+*/
 /**
  * 自定义基于阿里云知识库服务的RAG顾问配置
- */
-@Configuration
+ *//*
+
+//@Configuration
 @Slf4j
 class ShopMateAppRagCloudAdvisorConfig {
 
@@ -36,3 +39,4 @@ class ShopMateAppRagCloudAdvisorConfig {
                 .build();
     }
 }
+*/

@@ -38,8 +38,8 @@ public class ShopMateApp {
 
     @Resource
     private VectorStore shopMateAppVectorStore;
-    @Resource
-    private Advisor shopMateAppRagCloudAdvisor;
+//    @Resource
+//    private Advisor shopMateAppRagCloudAdvisor;
 
     //引入查询重写器
     @Resource
@@ -55,10 +55,10 @@ public class ShopMateApp {
 
     /**
      * 初始化 ai客户端
-     * @param dashscopeChatModel
+     * @param chatModel
      */
 
-    public ShopMateApp(ChatModel dashscopeChatModel) {
+    public ShopMateApp(ChatModel chatModel) {
         //1.聊天记忆管理器
 
 /*        //方式一：初始化基于文件的聊天记忆管理器
@@ -77,7 +77,7 @@ public class ShopMateApp {
 
 
         // 2.创建 ChatClient 实例
-        chatClient = ChatClient.builder(dashscopeChatModel)
+        chatClient = ChatClient.builder(chatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
                         MessageChatMemoryAdvisor.builder(chatMemory).build(),
@@ -252,10 +252,10 @@ public class ShopMateApp {
         return content;
     }
 
-    @Resource
-    private ToolCallbackProvider toolCallbackProvider;
+//    @Resource
+//    private ToolCallbackProvider toolCallbackProvider;
 
-    public String doChatWithMcp(String message, String chatId) {
+  /*  public String doChatWithMcp(String message, String chatId) {
         ChatResponse response = chatClient
                 .prompt()
                 .user(message)
@@ -278,7 +278,7 @@ public class ShopMateApp {
         String content = response.getResult().getOutput().getText();
         log.info("content: {}", content);
         return content;
-    }
+    }*/
 
 
     record ShopMateReport(String title, List<String> suggestions) {

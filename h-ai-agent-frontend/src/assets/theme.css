@@ -1,0 +1,37 @@
+:root {
+  --color-bg: #0b0d12;
+  --color-bg-elevated: #12151c;
+  --color-bg-card: #161b26;
+  --color-surface: #1c2230;
+  --color-border: rgba(99, 179, 237, 0.15);
+  --color-text: #e8ecf4;
+  --color-text-muted: #8b95a8;
+  --color-text-dim: #5c6678;
+  --color-accent: #00d4ff;
+  --color-accent-2: #7c3aed;
+  --color-accent-warm: #f472b6;
+  --color-success: #34d399;
+  --color-danger: #f87171;
+  --font-sans: 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-glow: 0 0 24px rgba(0, 212, 255, 0.12);
+  --header-h: 56px;
+  --footer-h: auto;
+  --chat-max-w: 920px;
+  --safe-x: clamp(12px, 4vw, 24px);
+}
+
+[data-theme='shop-mate'] {
+  --theme-primary: #6366f1;
+  --theme-primary-2: #8b5cf6;
+  --theme-glow: rgba(99, 102, 241, 0.35);
+}
+
+[data-theme='manus'] {
+  --theme-primary: #ec4899;
+  --theme-primary-2: #f43f5e;
+  --theme-glow: rgba(236, 72, 153, 0.35);
+}

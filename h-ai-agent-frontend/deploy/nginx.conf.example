@@ -1,0 +1,43 @@
+# Shopmate 前端 + Spring Boot 后端（同机部署示例）
+# 假设：后端监听 127.0.0.1:8123，context-path 为 /api
+# 将本文件内容合并进服务器的 Nginx 站点配置后 reload
+
+server {
+    listen 80;
+    server_name 你的域名或服务器IP;   # 例如 47.118.84.108
+
+    # 前端静态资源（npm run build 后的 dist 目录）
+    root /var/www/h-ai-agent-frontend/dist;
+    index index.html;
+
+    # Vue Router history 模式：除静态文件外回落到 index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端 API（含 SSE 流式接口，必须关闭缓冲）
+    location /api/ {
+        proxy_pass http://127.0.0.1:8123/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # SSE / 大模型长连接
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        chunked_transfer_encoding on;
+    }
+
+    # 静态资源缓存（可选）
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2)$ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+
+# HTTPS：在 certbot 或云厂商申请证书后，复制一份 server { listen 443 ssl; ... }
+# 并将 VITE_API_BASE_URL 保持为 /api 即可（与页面同域）

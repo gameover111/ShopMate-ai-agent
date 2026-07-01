@@ -133,7 +133,7 @@ class ShopMateAppTest {
         Assertions.assertNotNull(answer);
     }
 
-    @Test
+/*    @Test
     void doChatWithMcp() {
         String chatId = UUID.randomUUID().toString();
         // 测试 地图MCP 模式
@@ -148,5 +148,5 @@ class ShopMateAppTest {
         String message = "【系统指令：必须调用 searchImage 工具】帮我找一下运动鞋图片，直接把工具返回的原始数据或链接展示给我，不要说客服客套话。";
         String answer = shopMateApp.doChatWithMcp(message, chatId);
         Assertions.assertNotNull(answer);
-    }
+    }*/
 }

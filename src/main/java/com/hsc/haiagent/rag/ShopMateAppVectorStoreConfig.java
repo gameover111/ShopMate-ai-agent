@@ -24,7 +24,8 @@ public class ShopMateAppVectorStoreConfig {
     public VectorStore shopMateAppVectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel dashscopeEmbeddingModel) {
         // 💡 2. 这里只纯粹构建客户端组件，启动速度极快，且绝对不会往数据库塞任何数据！
         return PgVectorStore.builder(jdbcTemplate, dashscopeEmbeddingModel)
-                .dimensions(1024)
+//                .dimensions(1024)//阿里
+                .dimensions(1536)
                 .distanceType(COSINE_DISTANCE)
                 .indexType(HNSW)
                 .initializeSchema(false)

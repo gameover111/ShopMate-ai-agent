@@ -9,17 +9,6 @@
       "env": {
         "AMAP_MAPS_API_KEY": "1a1d319d99c588084145adb06e8ae93f"
       }
-    },
-    "h-image-search-mcp-server": {
-      "command": "C:/Users/hsc/.jdks/corretto-21.0.11/bin/java.exe",
-      "args": [
-        "-Dspring.ai.mcp.server.stdio=true",
-        "-Dspring.main.web-application-type=none",
-        "-jar",
-        "F:/ai_project/h-ai-agent/h-image-search-mcp-server/target/h-image-search-mcp-server-0.0.1-SNAPSHOT.jar"
-      ],
-      "env": {}
     }
-
   }
 }

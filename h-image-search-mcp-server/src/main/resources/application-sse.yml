@@ -1,9 +1,0 @@
-spring:
-  ai:
-    mcp:
-      server:
-        name: h-image-search-mcp-server
-        version: 0.0.1
-        type: SYNC
-#       （需关闭 stdio 模式）：
-        stdio: false
